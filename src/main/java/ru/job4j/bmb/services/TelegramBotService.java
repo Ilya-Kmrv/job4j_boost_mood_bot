@@ -8,7 +8,6 @@ import ru.job4j.bmb.content.Content;
 public class TelegramBotService {
     private final BotCommandHandler handler;
 
-    @Service
     public TelegramBotService(BotCommandHandler handler) {
         this.handler = handler;
     }
