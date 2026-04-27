@@ -1,4 +1,4 @@
-package ru.job4j.moodbot.repository;
+package ru.job4j.bmb.repository;
 
 public class AchievementRepository {
 }

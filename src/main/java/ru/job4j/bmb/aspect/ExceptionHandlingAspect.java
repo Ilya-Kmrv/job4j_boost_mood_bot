@@ -1,4 +1,4 @@
-package ru.job4j.moodbot.aspect;
+package ru.job4j.bmb.aspect;
 
 public class ExceptionHandlingAspect {
 }
