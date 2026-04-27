@@ -2,13 +2,23 @@ package ru.job4j.bmb.services;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.jvnet.hk2.annotations.Service;
+import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.stereotype.Service;
 import ru.job4j.bmb.content.Content;
 
 @Service
-public class BotCommandHandler {
+public class BotCommandHandler implements BeanNameAware {
+
+    private String beanName;
+
     void receive(Content content) {
         System.out.println(content);
+    }
+
+    @Override
+    public void setBeanName(String name) {
+        this.beanName = name;
+        System.out.println("Имя бина: " + name);
     }
 
     @PostConstruct
