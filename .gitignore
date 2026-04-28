@@ -18,3 +18,7 @@ target
 
 out
 *.log
+
+.idea
+target
+logs
