@@ -12,15 +12,15 @@ public class User {
     private Long id;
 
     @Column(name = "client_id")
-    private long clientId;
+    private Long clientId;
 
     @Column(name = "chat_id")
-    private long chatId;
+    private Long chatId;
 
     public User() {
     }
 
-    public User(Long id, long clientId, long chatId) {
+    public User(Long id, Long clientId, Long chatId) {
         this.id = id;
         this.clientId = clientId;
         this.chatId = chatId;
@@ -34,11 +34,11 @@ public class User {
         this.id = id;
     }
 
-    public long getClientId() {
+    public Long getClientId() {
         return clientId;
     }
 
-    public void setClientId(long clientId) {
+    public void setClientId(Long clientId) {
         this.clientId = clientId;
     }
 
@@ -46,7 +46,7 @@ public class User {
         return chatId;
     }
 
-    public void setChatId(long chatId) {
+    public void setChatId(Long chatId) {
         this.chatId = chatId;
     }
 

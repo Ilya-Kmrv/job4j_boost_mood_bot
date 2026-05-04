@@ -2,6 +2,7 @@ package ru.job4j.bmb.service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.springframework.stereotype.Service;
 import ru.job4j.bmb.content.Content;
 import ru.job4j.bmb.model.MoodLog;
 import ru.job4j.bmb.model.User;
@@ -16,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class MoodService {
     private final MoodLogRepository moodLogRepository;
     private final RecommendationEngine recommendationEngine;
@@ -39,12 +41,12 @@ public class MoodService {
         return recommendationEngine.recommendFor(user.getChatId(), moodId);
     }
 
-    public Optional<Content> weekMoodLogCommand(long chatId, Long clientId) {
+    public Optional<Content> weekMoodLogCommand(Long chatId, Long clientId) {
         var content = new Content(chatId);
         return Optional.of(content);
     }
 
-    public Optional<Content> monthMoodLogCommand(long chatId, Long clientId) {
+    public Optional<Content> monthMoodLogCommand(Long chatId, Long clientId) {
         var content = new Content(chatId);
         return Optional.of(content);
     }
@@ -61,7 +63,7 @@ public class MoodService {
         return sb.toString();
     }
 
-    public Optional<Content> awards(long chatId, Long clientId) {
+    public Optional<Content> awards(Long chatId, Long clientId) {
         var content = new Content(chatId);
         return Optional.of(content);
     }
