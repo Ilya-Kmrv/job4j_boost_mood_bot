@@ -93,7 +93,7 @@ public class TgRemoteService extends TelegramLongPollingBot {
                 var user = new User();
                 user.setClientId(message.getFrom().getId());
                 user.setChatId(chatId);
-                userRepository.add(user);
+                userRepository.save(user);
                 send(sendButtons(chatId));  // Метод для отправки кнопок пользователю
             }
         }
