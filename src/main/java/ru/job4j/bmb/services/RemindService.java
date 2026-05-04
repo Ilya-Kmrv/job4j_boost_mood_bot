@@ -15,7 +15,7 @@ public class RemindService {
         this.userRepository = userRepository;
     }
 
-    @Scheduled(fixedRateString = "${remind.period}")
+    //@Scheduled(fixedRateString = "${remind.period}")
     public void ping() {
         for (var user : userRepository.findAll()) {
             var message = new SendMessage();
