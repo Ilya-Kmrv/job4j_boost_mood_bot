@@ -4,24 +4,40 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import ru.job4j.bmb.content.Content;
+import ru.job4j.bmb.repository.MoodLogRepository;
 import ru.job4j.bmb.repository.UserRepository;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Service
 public class RemindService {
-    private final TelegramBotService telegramBotService;
-    private final UserRepository userRepository;
+    private final SentContent sentContent;
+    private final MoodLogRepository moodLogRepository;
+    private final TgUI tgUI;
 
-    public RemindService(TelegramBotService tgRemoteService, UserRepository userRepository) {
-        this.telegramBotService  = tgRemoteService;
-        this.userRepository = userRepository;
+    public RemindService(SentContent sentContent, MoodLogRepository moodLogRepository, TgUI tgUI) {
+        this.sentContent = sentContent;
+        this.moodLogRepository = moodLogRepository;
+        this.tgUI = tgUI;
     }
 
-    //@Scheduled(fixedRateString = "${remind.period}")
-    public void ping() {
-        for (var user : userRepository.findAll()) {
-            var message = new Content(user.getChatId());
-            message.setText("Ping");
-            telegramBotService.sent(message);
+    @Scheduled(fixedRateString = "${recommendation.alert.period}")
+    public void remindUsers() {
+        var startOfDay = LocalDate.now()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+        var endOfDay = LocalDate.now()
+                .plusDays(1)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli() - 1;
+        for (var user : moodLogRepository.findUsersWhoDidNotVoteToday(startOfDay, endOfDay)) {
+            var content = new Content(user.getChatId());
+            content.setText("Как настроение?");
+            content.setMarkup(tgUI.buildButtons());
+            sentContent.sent(content);
         }
     }
 }

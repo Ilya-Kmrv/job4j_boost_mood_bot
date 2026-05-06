@@ -118,7 +118,7 @@ public class MoodService {
                     .append(awardText)
                     .append("\n");
         }
-        content.setText(sb.toString());
+        content.setText(stringBuilder.toString());
         return Optional.of(content);
     }
 
