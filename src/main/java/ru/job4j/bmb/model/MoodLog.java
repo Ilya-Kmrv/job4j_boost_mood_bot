@@ -19,7 +19,7 @@ public class MoodLog {
     @JoinColumn(name = "mood_id")
     private Mood mood;
 
-    private long createdAt;
+    private Long createdAt;
 
     public Long getId() {
         return id;
@@ -41,7 +41,7 @@ public class MoodLog {
         return createdAt;
     }
 
-    public void setCreatedAt(long createdAt) {
+    public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
     }
 

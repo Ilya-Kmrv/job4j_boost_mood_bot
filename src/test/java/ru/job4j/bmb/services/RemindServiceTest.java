@@ -18,7 +18,6 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 class RemindServiceTest {
     @Test
     public void whenMoodGood() {

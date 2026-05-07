@@ -2,12 +2,10 @@ package ru.job4j.bmb.service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import ru.job4j.bmb.content.Content;
-import ru.job4j.bmb.model.Achievement;
-import ru.job4j.bmb.model.Mood;
-import ru.job4j.bmb.model.MoodLog;
-import ru.job4j.bmb.model.User;
+import ru.job4j.bmb.model.*;
 import ru.job4j.bmb.repository.AchievementRepository;
 import ru.job4j.bmb.repository.MoodLogRepository;
 import ru.job4j.bmb.repository.UserRepository;
@@ -28,27 +26,29 @@ public class MoodService {
     private final DateTimeFormatter formatter = DateTimeFormatter
             .ofPattern("dd-MM-yyyy HH:mm")
             .withZone(ZoneId.systemDefault());
+    private final ApplicationEventPublisher publisher;
 
     public MoodService(MoodLogRepository moodLogRepository,
                        RecommendationEngine recommendationEngine,
                        UserRepository userRepository,
-                       AchievementRepository achievementRepository) {
+                       AchievementRepository achievementRepository,
+                       ApplicationEventPublisher publisher) {
         this.moodLogRepository = moodLogRepository;
         this.recommendationEngine = recommendationEngine;
         this.userRepository = userRepository;
         this.achievementRepository = achievementRepository;
+        this.publisher = publisher;
     }
 
     public Content chooseMood(User user, Long moodId) {
         MoodLog log = new MoodLog();
         log.setUser(user);
         log.setCreatedAt(Instant.now().getEpochSecond());
-
         Mood mood = new Mood();
         mood.setId(moodId);
         log.setMood(mood);
-
         moodLogRepository.save(log);
+        publisher.publishEvent(new UserEvent(this, user));
         return recommendationEngine.recommendFor(user.getChatId(), moodId);
     }
 
