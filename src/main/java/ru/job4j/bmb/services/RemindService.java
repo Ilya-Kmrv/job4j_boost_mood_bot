@@ -2,11 +2,8 @@ package ru.job4j.bmb.services;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import ru.job4j.bmb.content.Content;
 import ru.job4j.bmb.repository.MoodLogRepository;
-import ru.job4j.bmb.repository.UserRepository;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 
@@ -16,7 +13,8 @@ public class RemindService {
     private final MoodLogRepository moodLogRepository;
     private final TgUI tgUI;
 
-    public RemindService(SentContent sentContent, MoodLogRepository moodLogRepository, TgUI tgUI) {
+    public RemindService(SentContent sentContent,
+                           MoodLogRepository moodLogRepository, TgUI tgUI) {
         this.sentContent = sentContent;
         this.moodLogRepository = moodLogRepository;
         this.tgUI = tgUI;
