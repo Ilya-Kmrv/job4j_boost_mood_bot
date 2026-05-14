@@ -11,11 +11,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "client_id")
+    @Column(name = "client_id", unique = true)
     private Long clientId;
 
     @Column(name = "chat_id")
     private Long chatId;
+
+    @Column(name = "receive_daily_advice")
+    private Boolean receiveDailyAdvice = true;
 
     public User() {
     }
@@ -48,6 +51,14 @@ public class User {
 
     public void setChatId(Long chatId) {
         this.chatId = chatId;
+    }
+
+    public Boolean getReceiveDailyAdvice() {
+        return receiveDailyAdvice;
+    }
+
+    public void setReceiveDailyAdvice(Boolean receiveDailyAdvice) {
+        this.receiveDailyAdvice = receiveDailyAdvice;
     }
 
     @Override

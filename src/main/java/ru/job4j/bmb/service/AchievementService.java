@@ -36,23 +36,22 @@ public class AchievementService implements ApplicationListener<UserEvent> {
     public void onApplicationEvent(UserEvent event) {
         var user = event.getUser();
 
-        long count = moodLogRepository.findByUserId(user.getId()).size();
+        long goodMoodCount = moodLogRepository.findByUserId(user.getId()).stream()
+                .filter(log -> log.getMood() != null && log.getMood().isGood())
+                .count();
 
         awardRepository.findAll().stream()
-                .filter(award -> award.getDays() == count)
-                .findFirst()
-                .ifPresent(award -> {
+                .filter(award -> award.getDays() == goodMoodCount) // Строгое равенство для точного порога
+                .filter(award -> achievementRepository.findByUserAndAward(user, award).isEmpty())
+                .forEach(award -> {
                     Achievement achievement = new Achievement();
                     achievement.setUser(user);
                     achievement.setAward(award);
                     achievement.setCreateAt(Instant.now().getEpochSecond());
                     achievementRepository.save(achievement);
+
                     Content content = new Content(user.getChatId());
-                    content.setText(
-                            "Congratulations! "
-                                    + "You received achievement: "
-                                    + award.getTitle()
-                    );
+                    content.setText("Поздравляем! Вы получили достижение: " + award.getTitle());
                     sentContent.sent(content);
                 });
     }

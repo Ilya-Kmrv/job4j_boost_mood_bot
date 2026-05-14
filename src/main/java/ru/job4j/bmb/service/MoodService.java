@@ -4,10 +4,12 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.job4j.bmb.content.Content;
 import ru.job4j.bmb.model.*;
 import ru.job4j.bmb.repository.AchievementRepository;
 import ru.job4j.bmb.repository.MoodLogRepository;
+import ru.job4j.bmb.repository.MoodRepository;
 import ru.job4j.bmb.repository.UserRepository;
 import ru.job4j.bmb.services.RecommendationEngine;
 
@@ -23,6 +25,7 @@ public class MoodService {
     private final RecommendationEngine recommendationEngine;
     private final UserRepository userRepository;
     private final AchievementRepository achievementRepository;
+    private final MoodRepository moodRepository;
     private final DateTimeFormatter formatter = DateTimeFormatter
             .ofPattern("dd-MM-yyyy HH:mm")
             .withZone(ZoneId.systemDefault());
@@ -32,11 +35,13 @@ public class MoodService {
                        RecommendationEngine recommendationEngine,
                        UserRepository userRepository,
                        AchievementRepository achievementRepository,
+                       MoodRepository moodRepository,
                        ApplicationEventPublisher publisher) {
         this.moodLogRepository = moodLogRepository;
         this.recommendationEngine = recommendationEngine;
         this.userRepository = userRepository;
         this.achievementRepository = achievementRepository;
+        this.moodRepository = moodRepository;
         this.publisher = publisher;
     }
 
@@ -44,47 +49,37 @@ public class MoodService {
         MoodLog log = new MoodLog();
         log.setUser(user);
         log.setCreatedAt(Instant.now().getEpochSecond());
-        Mood mood = new Mood();
-        mood.setId(moodId);
+        Mood mood = moodRepository.findById(moodId)
+                .orElseThrow(() -> new IllegalArgumentException("Mood not found: " + moodId));
         log.setMood(mood);
         moodLogRepository.save(log);
         publisher.publishEvent(new UserEvent(this, user));
         return recommendationEngine.recommendFor(user.getChatId(), moodId);
     }
 
+    @Transactional
     public Optional<Content> weekMoodLogCommand(Long chatId, Long clientId) {
-
         long weekAgo = Instant.now()
                 .minusSeconds(7 * 24 * 60 * 60)
                 .getEpochSecond();
-
-        List<MoodLog> logs = moodLogRepository.findAll().stream()
-                .filter(log -> log.getUser() != null)
-                .filter(log -> log.getUser().getId().equals(clientId))
-                .filter(log -> log.getCreatedAt() >= weekAgo)
-                .toList();
-
+        List<MoodLog> logs = moodLogRepository.findByClientIdAndCreatedAtAfter(clientId, weekAgo);
         var content = new Content(chatId);
         content.setText(formatMoodLogs(logs, "Mood for last 7 days"));
-
         return Optional.of(content);
     }
 
+    @Transactional
     public Optional<Content> monthMoodLogCommand(Long chatId, Long clientId) {
-
-        long monthAgo = Instant.now()
+        Long monthAgo = Instant.now()
                 .minusSeconds(30 * 24 * 60 * 60)
                 .getEpochSecond();
-
         List<MoodLog> logs = moodLogRepository.findAll().stream()
                 .filter(log -> log.getUser() != null)
-                .filter(log -> log.getUser().getId().equals(clientId))
+                .filter(log -> log.getUser().getClientId().equals(clientId))
                 .filter(log -> log.getCreatedAt() >= monthAgo)
                 .toList();
-
         var content = new Content(chatId);
         content.setText(formatMoodLogs(logs, "Mood for last 30 days"));
-
         return Optional.of(content);
     }
 
@@ -92,33 +87,42 @@ public class MoodService {
         if (logs.isEmpty()) {
             return title + ":\n No mood logs found.";
         }
-        var sb = new StringBuilder(title + ":\n");
-        logs.forEach(log -> {
-            String formattedDate = formatter.format(Instant.ofEpochSecond(log.getCreatedAt()));
-            sb.append(formattedDate).append(": ").append(log.getMood().getText()).append("\n");
-        });
-        return sb.toString();
+        var sb = new StringBuilder(title).append(":\n");
+        int limit = Math.min(logs.size(), 15);
+        for (int i = logs.size() - 1; i >= 0 && limit > 0; i--, limit--) {
+            MoodLog log = logs.get(i);
+            if (log.getCreatedAt() == null) {
+                continue;
+            }
+            String date = formatter.format(Instant.ofEpochSecond(log.getCreatedAt()));
+            String moodText = (log.getMood() != null && log.getMood().getText() != null)
+                    ? log.getMood().getText()
+                    : "Неизвестно";
+            sb.append(date).append(" | ").append(moodText).append("\n");
+        }
+        if (logs.size() > 15) {
+            sb.append("... и ещё ").append(logs.size() - 15).append(" записей");
+        }
+        String result = sb.toString();
+        return result.length() > 4000 ? result.substring(0, 3997) + "..." : result;
     }
 
+    @Transactional
     public Optional<Content> awards(Long chatId, Long clientId) {
-        List<Achievement> achievements = achievementRepository.findAll().stream()
-                .filter(a -> a.getUser() != null)
-                .filter(a -> a.getUser().getId().equals(clientId))
-                .toList();
+        List<Achievement> achievements = achievementRepository.findByClientId(clientId);
         var content = new Content(chatId);
         if (achievements.isEmpty()) {
-            content.setText("No achievements yet.");
+            content.setText("🏆 У вас пока нет полученных наград. Отмечайте хорошее настроение!");
             return Optional.of(content);
         }
-        StringBuilder stringBuilder = new StringBuilder("Your achievements:\n");
-        for (var a : achievements) {
-            String awardText = (a.getAward() != null)
-                    ? a.getAward().toString() : "Unknown award";
-            stringBuilder.append("- ")
-                    .append(awardText)
-                    .append("\n");
-        }
-        content.setText(stringBuilder.toString());
+        StringBuilder sb = new StringBuilder("🏆 Ваши полученные награды:\n");
+        achievements.forEach(a -> {
+            if (a.getAward() != null) {
+                sb.append("--").append(a.getAward().getTitle())
+                        .append(": ").append(a.getAward().getDescription()).append("\n");
+            }
+        });
+        content.setText(sb.toString());
         return Optional.of(content);
     }
 

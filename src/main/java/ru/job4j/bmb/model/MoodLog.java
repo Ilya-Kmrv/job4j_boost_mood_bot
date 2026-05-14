@@ -37,7 +37,7 @@ public class MoodLog {
         this.user = user;
     }
 
-    public long getCreatedAt() {
+    public Long getCreatedAt() {
         return createdAt;
     }
 

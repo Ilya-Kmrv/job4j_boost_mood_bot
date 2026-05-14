@@ -9,8 +9,7 @@ public class TgService extends LongPoll {
 
     @Override
     void receive(String message) {
-        voiceHandle.process(message)
-                .forEach(this::sent);
+        voiceHandle.process(message, this::sent).join();
     }
 
     public static void main(String[] args) {

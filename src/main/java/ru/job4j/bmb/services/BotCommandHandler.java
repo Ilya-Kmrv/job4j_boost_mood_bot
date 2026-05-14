@@ -1,5 +1,6 @@
 package ru.job4j.bmb.services;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -16,18 +17,21 @@ public class BotCommandHandler {
     private final UserRepository userRepository;
     private final MoodService moodService;
     private final TgUI tgUI;
+    private final DailyAdviceService dailyAdviceService;
 
     public BotCommandHandler(UserRepository userRepository,
                              MoodService moodService,
-                             TgUI tgUI) {
+                             TgUI tgUI,
+                             @Lazy DailyAdviceService dailyAdviceService) {
         this.userRepository = userRepository;
         this.moodService = moodService;
         this.tgUI = tgUI;
+        this.dailyAdviceService = dailyAdviceService;
     }
 
     public Optional<Content> commands(Message message) {
         String text = message.getText();
-        long chatId = message.getChatId();
+        Long chatId = message.getChatId();
         Long clientId = message.getFrom().getId();
 
         return switch (text) {
@@ -35,6 +39,8 @@ public class BotCommandHandler {
             case "/week_mood_log" -> moodService.weekMoodLogCommand(chatId, clientId);
             case "/month_mood_log" -> moodService.monthMoodLogCommand(chatId, clientId);
             case "/award" -> moodService.awards(chatId, clientId);
+            case "/daily_advice" -> dailyAdviceService.handleManualAdvice(chatId, clientId);
+            case "/toggle_advice" -> Optional.of(dailyAdviceService.toggleAutoAdvice(chatId, clientId));
             default -> Optional.empty();
         };
     }
@@ -46,10 +52,13 @@ public class BotCommandHandler {
     }
 
     private Optional<Content> handleStartCommand(Long chatId, Long clientId) {
-        var user = new User();
-        user.setClientId(clientId);
-        user.setChatId(chatId);
-        userRepository.save(user);
+        var existingUser = userRepository.findByClientId(clientId);
+        if (existingUser.isEmpty()) {
+            var user = new User();
+            user.setClientId(clientId);
+            user.setChatId(chatId);
+            userRepository.save(user);
+        }
         var content = new Content(chatId);
         content.setText("Как настроение?");
         content.setMarkup(tgUI.buildButtons());

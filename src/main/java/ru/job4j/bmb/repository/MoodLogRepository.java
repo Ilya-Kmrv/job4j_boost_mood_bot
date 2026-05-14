@@ -8,7 +8,7 @@ import ru.job4j.bmb.model.MoodLog;
 import ru.job4j.bmb.model.User;
 
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 @Repository
 public interface MoodLogRepository extends CrudRepository<MoodLog, Long> {
@@ -16,24 +16,21 @@ public interface MoodLogRepository extends CrudRepository<MoodLog, Long> {
 
     List<MoodLog> findByUserId(Long userId);
 
-    //Stream<MoodLog> findByUserIdOrderByCreatedAtDesc(Long userId);
-
-    //List<User> findUsersWhoDidNotVoteToday(Long startOfDay, Long endOfDay);
-
     @Query("""
-select distinct u from User u
-where not exists (
-    select 1 from MoodLog m
-    where m.user.id = u.id
-    and m.createdAt between :start and :end
-)
-""")
+            select distinct u from User u
+            where not exists (
+                select 1 from MoodLog m
+                where m.user.id = u.id
+                and m.createdAt between :start and :end
+            )
+            """)
     List<User> findUsersWhoDidNotVoteToday(
             @Param("start") Long startOfDay,
             @Param("end") Long endOfDay
     );
 
-    //List<MoodLog> findMoodLogsForWeek(Long userId, Long weekStart);
+    @Query("SELECT ml FROM MoodLog ml JOIN ml.user u WHERE u.clientId = :clientId AND ml.createdAt >= :since ORDER BY ml.createdAt DESC")
+    List<MoodLog> findByClientIdAndCreatedAtAfter(@Param("clientId") Long clientId, @Param("since") long since);
 
-    //List<MoodLog> findMoodLogsForMonth(Long userId, Long monthStart);
+    Optional<MoodLog> findTopByUserIdOrderByCreatedAtDesc(Long userId);
 }

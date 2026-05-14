@@ -77,9 +77,9 @@ public class Award {
 
     @Override
     public String toString() {
-        return "Award id= " + id
-                + ", title= " + title
-                + ", description= " + description
-                + ", days= " + days;
+        return "Award id = " + id + "\n"
+                + "Награда: " + title + "\n"
+                + "За:  " + description + "\n"
+                + "Дней: " + days;
     }
 }
